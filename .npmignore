@@ -1,0 +1,11 @@
+.idea
+.lein-*
+.cljs_node_repl
+.cpcache
+*.iml
+src
+test
+out
+*.txt
+project.clj
+dev

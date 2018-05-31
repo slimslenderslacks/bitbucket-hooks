@@ -1,0 +1,28 @@
+{
+  "name": "@atomist/bitbucket",
+  "main": "index.js",
+  "version": "0.0.1",
+  "description": "bitbucket api",
+  "keywords": [
+    "editors"
+  ],
+  "homepage": "https://github.com/atomisthq/bitbucket",
+  "author": {
+    "email": "slimslenderslacks@gmail.com"
+  },
+  "dependencies": {
+    "acorn": "5.5.3"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.2"
+  },
+  "scripts": {
+    "repl": "npm-run-all repl:install repl:socket-repl",
+    "compile": "lein cljsbuild once",
+    "clean": "lein clean",
+    "repl:install": "lein deps",
+    "repl:socket-repl": "lein trampoline run -m clojure.main dev/socket_repl.clj",
+    "repl:nrepl": "lein repl",
+    "lumo:test": "lumo --classpath src:test --dependencies rewrite-cljs:0.4.4 -m bitbucket.tests"
+  }
+}
