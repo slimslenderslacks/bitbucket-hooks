@@ -9,3 +9,6 @@
 
 (defn infof [s & args]
   (info (gstring/format s args)))
+
+(defn error [& args]
+  (.error js/console (apply str args)))
