@@ -1,12 +1,11 @@
 (defproject atomist/bitbucket "0.0.1"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.238"]
-                 [rewrite-cljs "0.4.4"]
                  [cljs-node-io "0.5.0"]
                  [noencore "0.1.16"]
                  [metosin/spec-tools "0.6.1"]
                  [org.clojure/test.check "0.10.0-alpha2"]
-                 [cljfmt "0.5.7"]]
+                 [atomist/cljs-http "0.0.1"]]
 
   :plugins [[lein-cljsbuild "1.1.5"]]
 

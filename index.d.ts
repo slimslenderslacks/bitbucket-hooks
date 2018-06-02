@@ -1,2 +1,9 @@
-export declare function checkHook(): void
-export declare function onRepo(server: string, project: string, repo-name: string, username: string, password: string): void
+export interface BitBucketConfig {
+   username: string;
+   password: string;
+   project: string;
+   server: string;
+   url: string;
+}
+export declare function checkProject(config: BitBucketConfig): Promise<any>
+export declare function onRepo(config: BitBucketConfig, repoSlug: string): Promise<any>
