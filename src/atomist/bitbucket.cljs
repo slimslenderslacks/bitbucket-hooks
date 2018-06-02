@@ -43,7 +43,6 @@
 (defn hook-resource [server hook-key]
   (gstring/format (str server "rest/api/1.0/hooks/%s") hook-key))
 
-
 (defn project-hook-resource-enabled [server project-name]
   (gstring/format (str server "rest/api/1.0/projects/%s/settings/hooks/%s/enabled") project-name hook-key))
 
@@ -112,7 +111,7 @@
        (log/info "successfully enabled hook " (-> response :body))
        (log/error "error enabling hook " (-> response :status))))
    (let [response (<! (http/put (project-hook-resource-settings server project hook-key)
-                                {:json-params {:hook-url-0 hook-url}
+                                {:json-params {:hook-url-0 url}
                                  :basic-auth [username password]}))]
      (if (= 201 (:status response))
        (log/info "successfully PUT settings for hook " (-> response :body))
