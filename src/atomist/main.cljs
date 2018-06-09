@@ -6,6 +6,15 @@
             [clojure.pprint :refer [pprint]]
             [atomist.cljs-log :as log]))
 
+(def bitbucket-server "http://bitbucket-server-54.atomist.com:7990/")
+(def webhook-url "https://webhook-staging.atomist.services/atomist/bitbucket/teams/A4EOI5D1E/7cq796lgw39rlsi")
+
+(def config {:server bitbucket-server
+             :project "SLIM"
+             :username "slimslenderslacks"
+             :password "slimslenderslacks"
+             :url webhook-url})
+
 (defn ^:export checkProject [config]
   (js/Promise.
    (fn [resolve reject]

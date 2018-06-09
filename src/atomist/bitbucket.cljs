@@ -29,15 +29,6 @@
    :url url,
    :active true})
 
-(def bitbucket-server "http://bitbucket-server-54.atomist.com:7990/")
-(def webhook-url "https://webhook-staging.atomist.services/atomist/bitbucket/teams/A4EOI5D1E/7cq796lgw39rlsi")
-
-(def config {:server bitbucket-server
-             :project "SLIM"
-             :username "slimslenderslacks"
-             :password "slimslenderslacks"
-             :url webhook-url})
-
 (def hook-key "com.atlassian.stash.plugin.stash-web-post-receive-hooks-plugin:postReceiveHook")
 
 (defn hook-resource [server hook-key]
@@ -84,7 +75,7 @@
 
 (defn trace [x] x)
 
-(defn check-for-our-webhook [x]
+(defn check-for-our-webhook [webhook-url x]
   (and
    (= webhook-url (:url x))
    (:active x)))
@@ -96,7 +87,7 @@
   [{:keys [server project username password url]} slug]
   (go
    (let [response (<! (http/post (repo-webhook-resource server project slug)
-                                 {:json-params (webhook-data webhook-url)
+                                 {:json-params (webhook-data url)
                                   :basic-auth [username password]}))]
      (if (= 201 (:status response))
        (log/info "successfully created webhook " (-> response :body :id))
@@ -135,10 +126,10 @@
     username
     password)))
 
-(defn repo-webhooks-channel [{:keys [server project username password]} slug]
+(defn repo-webhooks-channel [{:keys [server project username password url]} slug]
   (async/into []
               (add-transducer
-               (comp (filter check-for-our-webhook))
+               (comp (filter (partial check-for-our-webhook url)))
                (bitbucket-resource-value-channel
                 (repo-webhook-resource server project slug)
                 username
