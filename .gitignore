@@ -11,3 +11,4 @@ index.js
 .lein-*
 .cljs_node_repl
 main.js
+.nrepl-port
