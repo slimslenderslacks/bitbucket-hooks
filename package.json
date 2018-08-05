@@ -21,5 +21,10 @@
     "repl:socket-repl": "lein trampoline run -m clojure.main dev/socket_repl.clj",
     "repl:nrepl": "lein repl",
     "lumo:test": "lumo --classpath src:test --dependencies rewrite-cljs:0.4.4 -m bitbucket.tests"
+  },
+  "dependencies": {
+    "@cljs-oss/module-deps": "^1.1.1",
+    "kafka-node": "^2.6.1",
+    "kafkajs": "^1.2.0"
   }
 }

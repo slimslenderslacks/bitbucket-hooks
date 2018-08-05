@@ -1,8 +1,6 @@
 (ns atomist.main
   (:require [atomist.bitbucket :as bb]
             [cljs-node-io.core :as io :refer [slurp spit]]
-            [cljs.analyzer :as cljs]
-            [cljs.spec.alpha :as s]
             [clojure.pprint :refer [pprint]]
             [atomist.cljs-log :as log]))
 

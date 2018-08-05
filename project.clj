@@ -5,9 +5,11 @@
                  [noencore "0.1.16"]
                  [metosin/spec-tools "0.6.1"]
                  [org.clojure/test.check "0.10.0-alpha2"]
-                 [atomist/cljs-http "0.0.1"]]
+                 [com.atomist/cljs-http "0.0.1"]
+                 [io.nervous/hildebrand "0.4.5"]]
 
-  :plugins [[lein-cljsbuild "1.1.5"]]
+  :plugins [[lein-cljsbuild "1.1.5"]
+            [lein-npm       "0.6.2"]]
 
   :profiles {:dev {:dependencies [[cider/piggieback "0.3.1"]
                                   [org.clojure/tools.nrepl "0.2.13"]
@@ -20,6 +22,7 @@
    [:cljsbuild :builds 0 :compiler :output-dir]
    :target-path
    :compile-path]
+  :npm {:dependencies [[bignumber.js "2.4.0"]]}
   :cljsbuild {:builds [{:id "prod"
                         :source-paths ["src"]
                         :compiler {:main atomist.main
@@ -27,6 +30,9 @@
                                    :output-to "main.js"
                                    :output-dir "out"
                                    :externs ["externs.js"]
+                                   :npm-deps {:kafka-node "2.6.1"
+                                              :kafkajs "1.2.0"}
+                                   :install-deps true
                                    :optimizations :simple
                                    :pretty-print true
                                    :parallel-build true}}]})
