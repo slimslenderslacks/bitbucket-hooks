@@ -7,4 +7,3 @@ export interface BitBucketConfig {
 }
 export declare function checkProject(config: BitBucketConfig): Promise<any>
 export declare function onRepo(config: BitBucketConfig, repoSlug: string): Promise<any>
-export declare function testCallback(config: BitBucketConfig, callback: any): void

@@ -82,19 +82,22 @@
          producer (.producer kafka)]
      (fn [topic key message] (.send producer (clj->js {:topic topic :messages [{:key key :value message}]}))))))
 
+(def consumer (atom nil))
+(def producer (atom nil))
+
 (comment
  "run a consumer - hold on to a var"
- (go (def consumer (<! (create-consumer->chan "git_incoming" display-callback))))
+ (go (swap! consumer (constantly (<! (create-consumer->chan "git_incoming" display-callback)))))
  "disconnect a consumer"
- (.then (.disconnect consumer) (fn [result] (println "disconnect " result)))
+ (.then (.disconnect @consumer) (fn [result] (println "disconnect " result)))
  "seek an active consumer to a different offset - continue consuming"
- (.seek consumer (clj->js {:topic "git_incoming" :partition 15 :offset 273687}))
+ (.seek @consumer (clj->js {:topic "git_incoming" :partition 15 :offset 273687}))
  "not really sure what this is for"
- (.then (.describeGroup consumer) (fn [result] (pprint (js->clj result)))))
+ (.then (.describeGroup @consumer) (fn [result] (pprint (js->clj result)))))
 
 (comment
  "create a var containing a producing function"
- (go (def producer-fn (<! (create-producer-function->chan "topic")))))
+ (go (swap! producer-fn (constantly (<! (create-producer-function->chan "topic"))))))
 
 ;;
 ;; ------------------------

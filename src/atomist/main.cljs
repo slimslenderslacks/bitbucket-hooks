@@ -35,12 +35,6 @@
          (log/warn "failure to run onRepo " e)
          (reject e))))))
 
-(defn ^:export testCallback [config callback]
-  (let [c (js->clj config :keywordize-keys true)]
-    (log/info "first" c)
-    (println "second" c)
-    (.apply callback callback (into-array ["a"]))))
-
 (defn noop []
   (println "exporting ..."))
 

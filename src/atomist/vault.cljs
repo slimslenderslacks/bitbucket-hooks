@@ -13,8 +13,7 @@
    [kafkajs]))
 
 (def url process.env.VAULT_ADDR)
-;; TODO
-(def token nil)
+(def token (slurp process.env.VAULT_TOKEN_PATH))
 (def dynamo-url "https://dynamodb.us-west-2.amazonaws.com")
 
 (defn- body-data [response]
@@ -49,10 +48,18 @@
 
 (defn aws-creds->chan
   "channel should contain a set of dynamo creds {:access_key :secret_key :url}
-   TODO - this should be a caching channel"
+   cache these creds so we don't grab them over and over again"
   []
   (go
-   (let [response (<! (vault-full-path->chan "/v1/aws/creds/dynamo"))]
-     (-> response
-         (select-keys [:access_key :secret_key])
-         (assoc :url dynamo-url)))))
+   (let [f (io/file "/Users/slim/.atomist/creds-cache" "aws")]
+     (io/make-parents f)
+     (if (not (.exists f))
+       (let [response (<! (vault-full-path->chan "/v1/aws/creds/dynamo"))
+             creds-map (-> response
+                           (select-keys [:access_key :secret_key])
+                           (assoc :url dynamo-url)
+                           (assoc :endpoint dynamo-url))]
+         (io/make-parents f)
+         (spit f (pr-str creds-map))
+         creds-map)
+       (read-string (slurp f))))))

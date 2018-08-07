@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
+    "dynamodb": "^1.1.2",
     "kafka-node": "^2.6.1",
     "kafkajs": "^1.2.0"
   }
