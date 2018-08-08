@@ -31,6 +31,17 @@
 
 (def hook-key "com.atlassian.stash.plugin.stash-web-post-receive-hooks-plugin:postReceiveHook")
 
+(defn check-for-hook [x]
+  (= hook-key (-> x :details :key)))
+
+(defn check-for-our-webhook
+  [webhook-url x]
+  (and
+   (= webhook-url (:url x))
+   (:active x)))
+
+(defn trace [x] x)
+
 (defn hook-resource [server hook-key]
   (gstring/format (str server "rest/api/1.0/hooks/%s") hook-key))
 
@@ -52,33 +63,27 @@
   ([server project-name hook-key]
    (gstring/format (str server "rest/api/1.0/projects/%s/settings/hooks/%s") project-name hook-key)))
 
-(defn bitbucket-resource-value-channel
+(defn bitbucket-resource->channel
+  "create a channel that pages through all bitbucket values on a channel
+   channel will be closed when values are exhausted"
   [url username password]
   (let [c (async/chan 10)]
     (go-loop
      [start 0]
-     (let [response (async/<! (http/get url {:basic-auth [username password]}))]
+     (let [response (<! (http/get url {:basic-auth [username password]}))]
        (doseq [x (-> response :body :values)]
-         (async/>! c x))
+         (>! c x))
        (if (false? (-> response :body :isLastPage))
          (recur (-> response :body :size))
          (async/close! c))))
     c))
 
-(defn add-transducer [xf chan]
+(defn add-transducer
+  "create new channel with transducer added to existing channel"
+  [xf chan]
   (let [c (async/chan 10)]
     (async/pipeline 1 c xf chan)
     c))
-
-(defn check-for-hook [x]
-  (= hook-key (-> x :details :key)))
-
-(defn trace [x] x)
-
-(defn check-for-our-webhook [webhook-url x]
-  (and
-   (= webhook-url (:url x))
-   (:active x)))
 
 ;; ----- edit resources ------
 
@@ -108,53 +113,59 @@
        (log/info "successfully PUT settings for hook " (-> response :body))
        (log/error "error putting settings to hook " (-> response :status))))))
 
-(defn post-receive-hook-channel
-  "scan all of the project hooks and send any hooks we care about to the out channel"
+(defn post-receive-hook->channel
+  "create a channel by scanning all project hook resources in this project and filtering out the
+      ones that we care about"
   [{:keys [server project username password]}]
   (add-transducer
    (filter check-for-hook)
-   (bitbucket-resource-value-channel
+   (bitbucket-resource->channel
     (project-hook-resource server project)
     username
     password)))
 
-(defn slug-channel [{:keys [server project username password]}]
-  (add-transducer
-   (comp (map :slug) (map trace))
-   (bitbucket-resource-value-channel
-    (repo-resources server project)
-    username
-    password)))
 
-(defn repo-webhooks-channel [{:keys [server project username password url]} slug]
+(defn repo-webhooks->channel
+  "create a channel that can emit one value
+      - an [] of any repo resources that has our active webhook url
+      - empty [] means this repo doesn't have any"
+  [{:keys [server project username password url]} slug]
   (async/into []
               (add-transducer
                (comp (filter (partial check-for-our-webhook url)))
-               (bitbucket-resource-value-channel
+               (bitbucket-resource->channel
                 (repo-webhook-resource server project slug)
                 username
                 password))))
 
 (defn check-webhook
+  "create our webhook if the repo webhook channel emits an empty []
+    no error channel.
+   runs async but does not return any value on this channel"
   [config slug]
-  (when slug
-    (go
-     (let [webhooks (<! (repo-webhooks-channel config slug))]
-       (if (empty? webhooks)
-         (create-webhook config slug)
-         (log/info "active webhook for " slug))))))
+  (go
+   (let [webhooks (<! (repo-webhooks->channel config slug))]
+     (if (empty? webhooks)
+       (create-webhook config slug)
+       (log/info "active webhook for " slug)))))
 
 (defn check-all-project-webhooks
-  "read a project's repo slugs off of slug-channel and validate that all of the project webhooks are set up"
+  "PUBLIC
+     read a project's repo slugs off of slug-channel and validate that all of the project webhooks are set up according
+     to this config."
   [{:keys [server project username password] :as config} slug-channel]
   (go-loop
    [slug (<! slug-channel)]
-   (check-webhook config slug)
-   (if slug (recur (<! slug-channel)))))
+   (when slug
+     (check-webhook config slug)
+     (recur (<! slug-channel)))))
 
-(defn on-repo [{:keys [url] :as config} repo]
+(defn on-repo
+  "PUBLIC
+    whenever we create a new repo, check that the repo has the correct policy"
+  [{:keys [url] :as config} repo]
   (go
-   (if-let [hook (<! (post-receive-hook-channel config))]
+   (if-let [hook (<! (post-receive-hook->channel config))]
      (cond
        (not (:enabled hook))
        (do
@@ -165,9 +176,20 @@
      (log/info "there is no hook installed for" hook-key))
    (check-webhook config repo)))
 
+(defn slug->channel
+  "PUBLIC
+    return a channel with the slugs of all repo resources in this project"
+  [{:keys [server project username password]}]
+  (add-transducer
+   (comp (map :slug) (map trace))
+   (bitbucket-resource->channel
+    (repo-resources server project)
+    username
+    password)))
+
 (comment
  (on-repo config "chatswood2")
- (go (pprint (<! (post-receive-hook-channel config))))
+ (go (pprint (<! (post-receive-hook->channel config))))
 
  ;; fix all project webhooks in bibucket
- (check-all-project-webhooks config (slug-channel config)))
+ (check-all-project-webhooks config (slug->channel config)))

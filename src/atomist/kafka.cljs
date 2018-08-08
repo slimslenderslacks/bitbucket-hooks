@@ -75,12 +75,13 @@
    consumer will be consuming topic using callback
 
    consumer on the chan can be used to disconnect the consumer"
-  [topic callback]
+  [topics callback]
   (go
    (let [kafka (<! (kafka->chan (vault-path->chan "prod.atomist.services." "kafka")))
          consumer (.consumer kafka (clj->js {:groupId "slim"}))]
      (.connect consumer)
-     (.subscribe consumer (clj->js {:topic topic :fromBeginning false}))
+     (doseq [topic topics]
+       (.subscribe consumer (clj->js {:topic topic :fromBeginning false})))
      (.run consumer (clj->js {:eachMessage callback
                               :autoCommitThreshold 10}))
      consumer)))
@@ -99,7 +100,7 @@
 
 (comment
  "run a consumer - hold on to a var"
- (go (swap! consumer (constantly (<! (create-consumer->chan "git_incoming" (partial display-callback atomist.queries/data))))))
+ (go (swap! consumer (constantly (<! (create-consumer->chan ["git_incoming"] (partial display-callback atomist.queries/data))))))
  "disconnect a consumer"
  (.then (.disconnect @consumer) (fn [result] (println "disconnect " result)))
  "seek an active consumer to a different offset - continue consuming"
