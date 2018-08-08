@@ -53,12 +53,22 @@
 
 (defn display-callback
   "print a kafka message to stdout"
-  [message]
+  [id->team message]
   (let [m (js->clj message)
         message (-> (get-in m ["message" "value"])
                     (.toString)
-                    (json/json->clj :keyword-keys true))]
-    (println (gstring/format "%s(%s)-%s %s" (get m "topic") (get m "partition") (get-in m ["message" "offset"]) message))))
+                    (json/json->clj :keywordize-keys true))]
+    (println (gstring/format "%s(%-2d)-%-7d %-40s %-10s %-10s"
+                             (get m "topic")
+                             (get m "partition")
+                             (get-in m ["message" "offset"])
+                             (or (get id->team (:x-github-teamid message)) (:x-github-teamid message) "unknown")
+                             (or (:type message) "github")
+                             (or
+                              (:X-Gitlab-event message)
+                              (:x-bitbucket-type message)
+                              (:x-github-event message)
+                              "unknown")))))
 
 (defn create-consumer->chan
   "create a chan with an active consumer
@@ -69,8 +79,10 @@
   (go
    (let [kafka (<! (kafka->chan (vault-path->chan "prod.atomist.services." "kafka")))
          consumer (.consumer kafka (clj->js {:groupId "slim"}))]
-     (.subscribe consumer (clj->js {:topic topic}))
-     (.run consumer (clj->js {:eachMessage callback}))
+     (.connect consumer)
+     (.subscribe consumer (clj->js {:topic topic :fromBeginning false}))
+     (.run consumer (clj->js {:eachMessage callback
+                              :autoCommitThreshold 10}))
      consumer)))
 
 (defn create-producer-function->chan
@@ -87,7 +99,7 @@
 
 (comment
  "run a consumer - hold on to a var"
- (go (swap! consumer (constantly (<! (create-consumer->chan "git_incoming" display-callback)))))
+ (go (swap! consumer (constantly (<! (create-consumer->chan "git_incoming" (partial display-callback atomist.queries/data))))))
  "disconnect a consumer"
  (.then (.disconnect @consumer) (fn [result] (println "disconnect " result)))
  "seek an active consumer to a different offset - continue consuming"

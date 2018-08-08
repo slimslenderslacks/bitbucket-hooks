@@ -62,6 +62,8 @@
 
  (scan-table "prod.atomist.services.WebHooks" identity :name :name)
  (scan-table "prod.atomist.services.WebHooks" #(= (:name %) "gitlab-provider") :name identity)
+ (scan-table "prod.atomist.services.WebHooks" #(= (:name %) "bitbucket-provider") :name identity)
+ (scan-table "prod.atomist.services.WebHooks" #(= (:name %) "github-provider") :name identity)
 
  (count-team-webhook-fires "slack-event")
  (count-team-webhook-fires "slack")
