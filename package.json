@@ -13,6 +13,9 @@
   "devDependencies": {
     "npm-run-all": "^4.1.2"
   },
+  "bin": {
+    "bitbucket": "./cli.js"
+  },
   "scripts": {
     "repl": "npm-run-all repl:install repl:socket-repl",
     "compile": "lein cljsbuild once",
@@ -23,8 +26,6 @@
   },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
-    "dynamodb": "^1.1.2",
-    "kafka-node": "^2.6.1",
-    "kafkajs": "^1.2.0"
+    "yargs": "^12.0.1"
   }
 }

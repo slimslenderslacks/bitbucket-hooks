@@ -30,9 +30,7 @@
                                    :output-to "main.js"
                                    :output-dir "out"
                                    :externs ["externs.js"]
-                                   :npm-deps {:kafka-node "2.6.1"
-                                              :kafkajs "1.2.0"
-                                              :dynamodb "1.1.2"}
+                                   :npm-deps {}
                                    :install-deps true
                                    :optimizations :simple
                                    :pretty-print true
