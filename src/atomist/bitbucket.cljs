@@ -65,7 +65,12 @@
 
 (defn bitbucket-resource->channel
   "create a channel that pages through all bitbucket values on a channel
-   channel will be closed when values are exhausted"
+   channel will be closed when values are exhausted
+   TODO - forgot to add the start param to the query
+        - what about GET failures
+        - if values is empty, check whether isLastPage is always true
+        - should we recur with size + start?
+        - what about 200s with no values?"
   [url username password]
   (let [c (async/chan 10)]
     (go-loop
@@ -88,7 +93,8 @@
 ;; ----- edit resources ------
 
 (defn create-webhook
-  "schedule creation of webhook - no error channel or error callback besides logging"
+  "schedule creation of webhook
+   this is fire and forget so there is no error channel or error callback besides the logging"
   [{:keys [server project username password url]} slug]
   (go
    (let [response (<! (http/post (repo-webhook-resource server project slug)
@@ -141,13 +147,14 @@
 (defn check-webhook
   "create our webhook if the repo webhook channel emits an empty []
     no error channel.
-   runs async but does not return any value on this channel"
+   runs async but does not return any value on this channel because it's
+    actions are either creating things or logging something - no error channel"
   [config slug]
   (go
    (let [webhooks (<! (repo-webhooks->channel config slug))]
      (if (empty? webhooks)
        (create-webhook config slug)
-       (log/info "active webhook for " slug)))))
+       (log/info "found existing webhook on " slug)))))
 
 (defn check-all-project-webhooks
   "PUBLIC
