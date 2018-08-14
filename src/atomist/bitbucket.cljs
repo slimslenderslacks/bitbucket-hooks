@@ -8,7 +8,7 @@
             [atomist.cljs-log :as log]))
 
 (defn webhook-data [url]
-  {:name "Atomist Webhook",
+  {:name "Atomist Webhook"
    :events
    ["pr:comment:edited"
     "pr:reviewer:needs_work"
@@ -24,9 +24,9 @@
     "pr:opened"
     "repo:comment:added"
     "pr:deleted"
-    "pr:reviewer:unapproved"],
-   :configuration {},
-   :url url,
+    "pr:reviewer:unapproved"]
+   :configuration {}
+   :url url
    :active true})
 
 (def hook-key "com.atlassian.stash.plugin.stash-web-post-receive-hooks-plugin:postReceiveHook")
@@ -76,16 +76,16 @@
   (let [c (async/chan 10)]
     (go-loop
      [start 0]
-     (let [response (<! (http/get url {:basic-auth [username password]
-                                       :query-params {:start start}}))]
-       (if (= 200 (-> response :status))
-         (do
-           (doseq [x (-> response :body :values)]
-             (>! c x))
-           (if (false? (-> response :body :isLastPage))
-             (recur (+ start (-> response :body :size)))))
-         (log/warnf "status on request to %s is %s" url (-> response :status)))
-       (async/close! c)))
+      (let [response (<! (http/get url {:basic-auth [username password]
+                                        :query-params {:start start}}))]
+        (if (= 200 (-> response :status))
+          (do
+            (doseq [x (-> response :body :values)]
+              (>! c x))
+            (if (false? (-> response :body :isLastPage))
+              (recur (+ start (-> response :body :size)))))
+          (log/warnf "status on request to %s is %s" url (-> response :status)))
+        (async/close! c)))
     c))
 
 (defn add-transducer
@@ -102,27 +102,27 @@
    this is fire and forget so there is no error channel or error callback besides the logging"
   [{:keys [server project username password url]} slug]
   (go
-   (let [response (<! (http/post (repo-webhook-resource server project slug)
-                                 {:json-params (webhook-data url)
-                                  :basic-auth [username password]}))]
-     (if (= 201 (:status response))
-       (log/info "successfully created webhook " (-> response :body :id))
-       (log/error "error creating webhook " (-> response :status))))))
+    (let [response (<! (http/post (repo-webhook-resource server project slug)
+                                  {:json-params (webhook-data url)
+                                   :basic-auth [username password]}))]
+      (if (= 201 (:status response))
+        (log/info "successfully created webhook " (-> response :body :id))
+        (log/error "error creating webhook " (-> response :status))))))
 
 (defn enable-hook
   "schedule the creation of the hook - no error channel or error callback besides logging"
   [{:keys [server project username password url]}]
   (go
-   (let [response (<! (http/put (project-hook-resource-enabled server project) {:basic-auth [username password]}))]
-     (if (= 201 (:status response))
-       (log/info "successfully enabled hook " (-> response :body))
-       (log/error "error enabling hook " (-> response :status))))
-   (let [response (<! (http/put (project-hook-resource-settings server project hook-key)
-                                {:json-params {:hook-url-0 url}
-                                 :basic-auth [username password]}))]
-     (if (= 201 (:status response))
-       (log/info "successfully PUT settings for hook " (-> response :body))
-       (log/error "error putting settings to hook " (-> response :status))))))
+    (let [response (<! (http/put (project-hook-resource-enabled server project) {:basic-auth [username password]}))]
+      (if (= 201 (:status response))
+        (log/info "successfully enabled hook " (-> response :body))
+        (log/error "error enabling hook " (-> response :status))))
+    (let [response (<! (http/put (project-hook-resource-settings server project hook-key)
+                                 {:json-params {:hook-url-0 url}
+                                  :basic-auth [username password]}))]
+      (if (= 201 (:status response))
+        (log/info "successfully PUT settings for hook " (-> response :body))
+        (log/error "error putting settings to hook " (-> response :status))))))
 
 (defn post-receive-hook->channel
   "create a channel by scanning all project hook resources in this project and filtering out the
@@ -134,7 +134,6 @@
     (project-hook-resource server project)
     username
     password)))
-
 
 (defn repo-webhooks->channel
   "create a channel that can emit one value
@@ -156,10 +155,10 @@
     actions are either creating things or logging something - no error channel"
   [config slug]
   (go
-   (let [webhooks (<! (repo-webhooks->channel config slug))]
-     (if (empty? webhooks)
-       (create-webhook config slug)
-       (log/info "found existing webhook on " slug)))))
+    (let [webhooks (<! (repo-webhooks->channel config slug))]
+      (if (empty? webhooks)
+        (create-webhook config slug)
+        (log/info "found existing webhook on " slug)))))
 
 (defn check-all-project-webhooks
   "PUBLIC
@@ -168,25 +167,25 @@
   [{:keys [server project username password] :as config} slug-channel]
   (go-loop
    [slug (<! slug-channel)]
-   (when slug
-     (check-webhook config slug)
-     (recur (<! slug-channel)))))
+    (when slug
+      (check-webhook config slug)
+      (recur (<! slug-channel)))))
 
 (defn on-repo
   "PUBLIC
     whenever we create a new repo, check that the repo has the correct policy"
   [{:keys [url] :as config} repo]
   (go
-   (if-let [hook (<! (post-receive-hook->channel config))]
-     (cond
-       (not (:enabled hook))
-       (do
-         (log/info "enabling hook")
-         (enable-hook config))
-       :else
-       (log/info "project hook enabled"))
-     (log/info "there is no hook installed for" hook-key))
-   (check-webhook config repo)))
+    (if-let [hook (<! (post-receive-hook->channel config))]
+      (cond
+        (not (:enabled hook))
+        (do
+          (log/info "enabling hook")
+          (enable-hook config))
+        :else
+        (log/info "project hook enabled"))
+      (log/info "there is no hook installed for" hook-key))
+    (check-webhook config repo)))
 
 (defn slug->channel
   "PUBLIC

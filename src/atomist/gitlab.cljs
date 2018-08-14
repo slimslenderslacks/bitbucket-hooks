@@ -8,11 +8,8 @@
             [atomist.cljs-log :as log]))
 
 (comment
- (def system-hooks-api "api/v4/hooks")
+  (def system-hooks-api "api/v4/hooks")
 
- (def project-hooks-api "api/v4/projects/%s/hooks" project)
- (def project-hook-api "api/v4/projects/%s/hooks/%s" project hook-id)
-
-
- (http/get hooks-api {:headers {"PRIVATE_TOKEN" ""}}))
+  (def project-hooks-api "api/v4/projects/%s/hooks" project)
+  (def project-hook-api "api/v4/projects/%s/hooks/%s" project hook-id) (http/get hooks-api {:headers {"PRIVATE_TOKEN" ""}}))
 

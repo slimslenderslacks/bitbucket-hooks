@@ -8,4 +8,4 @@
   (tubular.core/connect 7777))
 
 (defn node-repl []
-    (cider.piggieback/cljs-repl (node/repl-env :port 7777)))
+  (cider.piggieback/cljs-repl (node/repl-env :port 7777)))
