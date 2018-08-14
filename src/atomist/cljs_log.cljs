@@ -6,9 +6,10 @@
   (.info js/console (apply str args)))
 (def warn log)
 (def info log)
+(def error log)
 
 (defn infof [s & args]
-  (info (gstring/format s args)))
+  (info (apply gstring/format s args)))
 
-(defn error [& args]
-  (.error js/console (apply str args)))
+(defn warnf [s & args]
+  (warn (apply gstring/format s args)))

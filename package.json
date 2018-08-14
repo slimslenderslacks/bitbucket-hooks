@@ -14,7 +14,7 @@
     "npm-run-all": "^4.1.2"
   },
   "bin": {
-    "bitbucket": "./cli.js"
+    "rcca": "./cli.js"
   },
   "scripts": {
     "repl": "npm-run-all repl:install repl:socket-repl",

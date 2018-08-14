@@ -63,24 +63,29 @@
   ([server project-name hook-key]
    (gstring/format (str server "rest/api/1.0/projects/%s/settings/hooks/%s") project-name hook-key)))
 
+;; https://docs.atlassian.com/bitbucket-server/rest/5.12.0/bitbucket-rest.html
 (defn bitbucket-resource->channel
   "create a channel that pages through all bitbucket values on a channel
    channel will be closed when values are exhausted
    TODO - forgot to add the start param to the query
         - what about GET failures
         - if values is empty, check whether isLastPage is always true
-        - should we recur with size + start?
+        - should we recur with size + start?nn
         - what about 200s with no values?"
   [url username password]
   (let [c (async/chan 10)]
     (go-loop
      [start 0]
-     (let [response (<! (http/get url {:basic-auth [username password]}))]
-       (doseq [x (-> response :body :values)]
-         (>! c x))
-       (if (false? (-> response :body :isLastPage))
-         (recur (-> response :body :size))
-         (async/close! c))))
+     (let [response (<! (http/get url {:basic-auth [username password]
+                                       :query-params {:start start}}))]
+       (if (= 200 (-> response :status))
+         (do
+           (doseq [x (-> response :body :values)]
+             (>! c x))
+           (if (false? (-> response :body :isLastPage))
+             (recur (+ start (-> response :body :size)))))
+         (log/warnf "status on request to %s is %s" url (-> response :status)))
+       (async/close! c)))
     c))
 
 (defn add-transducer
@@ -193,10 +198,3 @@
     (repo-resources server project)
     username
     password)))
-
-(comment
- (on-repo config "chatswood2")
- (go (pprint (<! (post-receive-hook->channel config))))
-
- ;; fix all project webhooks in bibucket
- (check-all-project-webhooks config (slug->channel config)))

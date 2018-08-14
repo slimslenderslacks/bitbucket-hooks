@@ -5,27 +5,29 @@ var argv = require('yargs')
 
   .usage('Usage: $0 <command> [options]')
 
-  .command('checkProject', 'watch our git_incoming stream',
+  .command(
+    'converge <type>',
+    'converge a webhook policy',
     (yargs) => {
       yargs
-      .option('server', {
-        describe: 'kafka group'})
-      .option('project', {
-        describe: 'staging or prod environment'})
-      .option('url', {
-        describe: 'webhook url to check'})
+        .option('server', {describe: 'api root url'})
+        .option('project', {describe: 'bitbucket project'})
+        .option('url', {describe: 'atomist webhook url'})
+        .option('username', {describe: 'admin username'})
+        .option('password', {describe: 'admin password'})
     },
     (argv) => {
-       cli.checkProject({server: argv.server,
-                         project: argv.project,
-                         username: argv.username,
-                         password: argv.password,
-                         url: argv.url});
-    })
-  .command('onRepo', 'run this each time a new repo is added',
-    (yargs) => {},
-    (argv) => {
-      cli.onRepo({}, "");
-    })
+      if ("bitbucket" == argv.type) {
+        cli.converge({server: argv.server,
+                      project: argv.project,
+                      username: argv.username,
+                      password: argv.password,
+                      url: argv.url});
+      }
+      else {
+        console.log(`${argv.type} is not a valid resource type`);
+      }
+    }
+  )
 
   .argv

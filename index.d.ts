@@ -1,9 +1,9 @@
-export interface BitBucketConfig {
+export interface Policy {
    username: string;
    password: string;
    project: string;
    server: string;
    url: string;
 }
-export declare function checkProject(config: BitBucketConfig): Promise<any>
-export declare function onRepo(config: BitBucketConfig, repoSlug: string): Promise<any>
+export declare function converge(policy: Policy): Promise<any>
+export declare function onRepo(policy: Policy, repoSlug: string): Promise<any>
